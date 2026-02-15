@@ -88,7 +88,7 @@ Visit `/test-error` in your browser, and the error should appear on your dashboa
 
 ## License
 
-Proprietary - MIT
+MIT
 
 ## Support
 
