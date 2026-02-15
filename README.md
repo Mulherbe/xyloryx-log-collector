@@ -88,7 +88,7 @@ Visit `/test-error` in your browser, and the error should appear on your dashboa
 
 ## License
 
-Proprietary - Licensed for use with Xyloryx Log.
+Proprietary - MIT
 
 ## Support
 
