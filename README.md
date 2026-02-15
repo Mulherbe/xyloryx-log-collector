@@ -1,6 +1,6 @@
 # Xyloryx Log Collector
 
-Laravel package for sending errors to your self-hosted Xyloryx Log monitoring system.
+Laravel package for sending errors to [Xyloryx Log](https://log.xiloryx.fr) — real-time error monitoring for Laravel applications.
 
 ## Installation
 
@@ -12,29 +12,32 @@ composer require xyloryx/log-collector
 
 ## Configuration
 
-### 1. Publish Configuration
-
-Publish the configuration file:
-
-```bash
-php artisan vendor:publish --tag=xyloryx-log-config
-```
-
-### 2. Environment Variables
+### 1. Environment Variables
 
 Add the following variables to your `.env` file:
 
 ```env
 XYLORYX_LOG_ENABLED=true
-XYLORYX_LOG_ENDPOINT=http://your-xyloryx-log-server.com/api/errors
 XYLORYX_LOG_API_KEY=your_project_api_key_here
 ```
 
-**Important:** Replace the endpoint URL with your Xyloryx Log server URL and the API key with your project's unique key from the Xyloryx Log dashboard.
+You can find your API key in your project settings on [log.xiloryx.fr](https://log.xiloryx.fr).
 
-### 3. Integrate with Exception Handler
+### 2. Integrate with Exception Handler
 
-In your `app/Exceptions/Handler.php`, add the error reporting to the `register` method:
+In your `bootstrap/app.php` (Laravel 11+):
+
+```php
+->withExceptions(function (Exceptions $exceptions) {
+    if (config('xyloryx-log.enabled', false)) {
+        $exceptions->report(function (Throwable $e) {
+            app(\Xyloryx\LogCollector\XyloryxLogHandler::class)->report($e);
+        });
+    }
+})
+```
+
+For Laravel 10, in your `app/Exceptions/Handler.php`:
 
 ```php
 use Xyloryx\LogCollector\XyloryxLogHandler;
@@ -47,13 +50,19 @@ public function register(): void
 }
 ```
 
+### 3. (Optional) Publish Configuration
+
+```bash
+php artisan vendor:publish --tag=xyloryx-log-config
+```
+
 ## Usage
 
-Once configured, the package will automatically capture and send all exceptions to your Xyloryx Log server.
+Once configured, the package automatically captures and sends all exceptions to your Xyloryx Log dashboard at [log.xiloryx.fr](https://log.xiloryx.fr).
 
 ### Testing
 
-To test the integration, you can trigger a test exception:
+Trigger a test exception to verify the integration:
 
 ```php
 Route::get('/test-error', function () {
@@ -61,31 +70,15 @@ Route::get('/test-error', function () {
 });
 ```
 
-Visit `/test-error` in your browser, and the error should appear in your Xyloryx Log dashboard.
+Visit `/test-error` in your browser, and the error should appear on your dashboard.
 
 ## Features
 
 - **Automatic Error Capture**: Captures all unhandled exceptions
 - **Context Information**: Includes request URL, method, IP, user ID, and environment
-- **Silent Failure**: Won't break your application if the monitoring server is down
+- **Silent Failure**: Won't break your application if the monitoring platform is unreachable
 - **Timeout Protection**: 2-second timeout prevents slow responses from affecting your app
 - **Configurable**: Enable/disable monitoring via environment variables
-
-## Configuration Options
-
-### Enable/Disable Monitoring
-
-```env
-XYLORYX_LOG_ENABLED=false
-```
-
-### Custom Endpoint
-
-If your Xyloryx Log server is hosted at a different URL:
-
-```env
-XYLORYX_LOG_ENDPOINT=https://monitoring.yourdomain.com/api/errors
-```
 
 ## Requirements
 
@@ -95,13 +88,8 @@ XYLORYX_LOG_ENDPOINT=https://monitoring.yourdomain.com/api/errors
 
 ## License
 
-Proprietary - Licensed for use with Xyloryx Log monitoring system only.
+Proprietary - Licensed for use with Xyloryx Log.
 
 ## Support
 
 For support, please contact: contact@xyloryx.com
-
----
-
-**Note:** This package requires an active Xyloryx Log server installation. Visit the Xyloryx Log documentation for setup instructions.
-# xyloryx-log-collector

@@ -19,14 +19,12 @@ return [
     | Xyloryx Log Endpoint
     |--------------------------------------------------------------------------
     |
-    | The endpoint URL of your Xyloryx Log monitoring server.
-    | This should be the full URL including the /api/errors path.
-    |
-    | Example: http://localhost/api/errors
+    | The endpoint URL of the Xyloryx Log monitoring platform.
+    | This is pre-configured to point to https://log.xiloryx.fr.
     |
     */
 
-    'endpoint' => env('XYLORYX_LOG_ENDPOINT'),
+    'endpoint' => 'https://log.xiloryx.fr/api/errors',
 
     /*
     |--------------------------------------------------------------------------

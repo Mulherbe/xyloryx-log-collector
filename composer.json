@@ -1,5 +1,6 @@
 {
     "name": "xyloryx/log-collector",
+    "version": "1.0.2",
     "description": "Laravel error collector package for Xyloryx Log monitoring system",
     "type": "library",
     "license": "proprietary",
