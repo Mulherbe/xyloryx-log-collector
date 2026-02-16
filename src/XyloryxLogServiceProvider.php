@@ -71,6 +71,7 @@ class XyloryxLogServiceProvider extends ServiceProvider
     /**
      * Register the heartbeat middleware for request counting.
      * Uses the terminate phase so it doesn't block the response.
+     * Registered on both web and api groups to cover all traffic.
      */
     protected function registerHeartbeatMiddleware(): void
     {
@@ -78,6 +79,7 @@ class XyloryxLogServiceProvider extends ServiceProvider
             /** @var \Illuminate\Routing\Router $router */
             $router = $this->app['router'];
             $router->pushMiddlewareToGroup('web', XyloryxHeartbeatMiddleware::class);
+            $router->pushMiddlewareToGroup('api', XyloryxHeartbeatMiddleware::class);
         }
     }
 }
