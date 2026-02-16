@@ -4,92 +4,72 @@ Laravel package for sending errors to [Xyloryx Log](https://log.xiloryx.fr) — 
 
 ## Installation
 
-Install the package via Composer:
-
 ```bash
 composer require xyloryx/log-collector
 ```
 
+That's it. The package auto-registers itself via Laravel's package discovery.
+
 ## Configuration
 
-### 1. Environment Variables
+### 1. Add your API key
 
-Add the following variables to your `.env` file:
+Add the following to your `.env` file:
 
 ```env
-XYLORYX_LOG_ENABLED=true
 XYLORYX_LOG_API_KEY=your_project_api_key_here
 ```
 
 You can find your API key in your project settings on [log.xiloryx.fr](https://log.xiloryx.fr).
 
-### 2. Integrate with Exception Handler
-
-In your `bootstrap/app.php` (Laravel 11+):
-
-```php
-->withExceptions(function (Exceptions $exceptions) {
-    if (config('xyloryx-log.enabled', false)) {
-        $exceptions->report(function (Throwable $e) {
-            app(\Xyloryx\LogCollector\XyloryxLogHandler::class)->report($e);
-        });
-    }
-})
-```
-
-For Laravel 10, in your `app/Exceptions/Handler.php`:
-
-```php
-use Xyloryx\LogCollector\XyloryxLogHandler;
-
-public function register(): void
-{
-    $this->reportable(function (Throwable $e) {
-        app(XyloryxLogHandler::class)->report($e);
-    });
-}
-```
-
-### 3. (Optional) Publish Configuration
+### 2. (Optional) Publish the config file
 
 ```bash
 php artisan vendor:publish --tag=xyloryx-log-config
 ```
 
-## Usage
+This gives you access to the full config at `config/xyloryx-log.php`.
 
-Once configured, the package automatically captures and sends all exceptions to your Xyloryx Log dashboard at [log.xiloryx.fr](https://log.xiloryx.fr).
+## Available environment variables
 
-### Testing
-
-Trigger a test exception to verify the integration:
-
-```php
-Route::get('/test-error', function () {
-    throw new \Exception('Test error for Xyloryx Log');
-});
-```
-
-Visit `/test-error` in your browser, and the error should appear on your dashboard.
+| Variable | Default | Description |
+|---|---|---|
+| `XYLORYX_LOG_API_KEY` | `null` | **Required.** Your project API key |
+| `XYLORYX_LOG_ENABLED` | `true` | Enable/disable error reporting |
+| `XYLORYX_LOG_HEARTBEAT` | `false` | Enable request counting (premium) |
 
 ## Features
 
-- **Automatic Error Capture**: Captures all unhandled exceptions
-- **Context Information**: Includes request URL, method, IP, user ID, and environment
-- **Silent Failure**: Won't break your application if the monitoring platform is unreachable
-- **Timeout Protection**: 2-second timeout prevents slow responses from affecting your app
-- **Configurable**: Enable/disable monitoring via environment variables
+### Error reporting
+
+All unhandled exceptions are automatically captured and sent to your dashboard — no code changes required. The package hooks into Laravel's exception handler on boot.
+
+Each error includes:
+- Exception message, file, and line
+- Full stack trace
+- Request URL, method, and IP
+- Authenticated user ID (if available)
+- PHP version and environment
+
+### Project Health (premium)
+
+When `XYLORYX_LOG_HEARTBEAT=true`, the package tracks your total request count using a local cache buffer. Requests are batched and sent to Xyloryx Log every 100 hits — **zero performance impact** on your app.
+
+This powers the **Project Health** dashboard: total requests, total errors, and error rate over 30 days.
+
+## Silent by design
+
+The package will **never** throw an exception or slow down your application:
+- All HTTP calls to Xyloryx Log have a 2-second timeout
+- Every failure is caught and silently ignored
+- Heartbeat runs in the `terminate()` phase, after the response is sent
 
 ## Requirements
 
 - PHP 8.1 or higher
-- Laravel 10.0 or higher
+- Laravel 10, 11, or 12
 - Guzzle HTTP client (included with Laravel)
-
-## License
-
-MIT
 
 ## Support
 
-For support, please contact: contact@xyloryx.com
+For support: contact@xyloryx.com

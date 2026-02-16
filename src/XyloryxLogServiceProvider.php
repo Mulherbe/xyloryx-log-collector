@@ -2,6 +2,7 @@
 
 namespace Xyloryx\LogCollector;
 
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +34,7 @@ class XyloryxLogServiceProvider extends ServiceProvider
 
         $this->registerRoutes();
         $this->registerHeartbeatMiddleware();
+        $this->registerExceptionReporting();
     }
 
     /**
@@ -80,6 +82,25 @@ class XyloryxLogServiceProvider extends ServiceProvider
             $router = $this->app['router'];
             $router->pushMiddlewareToGroup('web', XyloryxHeartbeatMiddleware::class);
             $router->pushMiddlewareToGroup('api', XyloryxHeartbeatMiddleware::class);
+        }
+    }
+
+    /**
+     * Auto-wire exception reporting into Laravel's exception handler.
+     * Works on Laravel 10, 11 and 12 — zero config required from the client.
+     */
+    protected function registerExceptionReporting(): void
+    {
+        if (!config('xyloryx-log.enabled', true)) {
+            return;
+        }
+
+        $handler = $this->app->make(ExceptionHandler::class);
+
+        if (method_exists($handler, 'reportable')) {
+            $handler->reportable(function (\Throwable $e) {
+                $this->app->make(XyloryxLogHandler::class)->report($e);
+            });
         }
     }
 }

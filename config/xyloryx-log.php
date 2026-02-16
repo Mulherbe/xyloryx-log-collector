@@ -54,4 +54,5 @@ return [
 
     'heartbeat_endpoint' => 'https://log.xiloryx.fr/api/heartbeat',
 
+
 ];
