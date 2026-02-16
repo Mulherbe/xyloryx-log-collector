@@ -32,6 +32,7 @@ class XyloryxLogServiceProvider extends ServiceProvider
         ], 'xyloryx-log-config');
 
         $this->registerRoutes();
+        $this->registerHeartbeatMiddleware();
     }
 
     /**
@@ -60,9 +61,23 @@ class XyloryxLogServiceProvider extends ServiceProvider
             return response()->json([
                 'status' => 'ok',
                 'package' => 'xyloryx/log-collector',
-                'version' => '1.1.0',
+                'version' => '1.2.0',
                 'enabled' => config('xyloryx-log.enabled', false),
+                'heartbeat' => config('xyloryx-log.heartbeat_enabled', false),
             ]);
         });
+    }
+
+    /**
+     * Register the heartbeat middleware for request counting.
+     * Uses the terminate phase so it doesn't block the response.
+     */
+    protected function registerHeartbeatMiddleware(): void
+    {
+        if (config('xyloryx-log.heartbeat_enabled', false)) {
+            /** @var \Illuminate\Routing\Router $router */
+            $router = $this->app['router'];
+            $router->pushMiddlewareToGroup('web', XyloryxHeartbeatMiddleware::class);
+        }
     }
 }

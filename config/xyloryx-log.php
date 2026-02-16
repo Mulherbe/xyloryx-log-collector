@@ -38,4 +38,20 @@ return [
 
     'api_key' => env('XYLORYX_LOG_API_KEY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Heartbeat (Project Health)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the collector sends a lightweight POST request to the
+    | heartbeat endpoint on every web request (via terminate middleware).
+    | This allows Xyloryx Log to track total request counts per project
+    | and calculate error rates. Disabled by default (premium feature).
+    |
+    */
+
+    'heartbeat_enabled' => env('XYLORYX_LOG_HEARTBEAT', false),
+
+    'heartbeat_endpoint' => 'https://log.xiloryx.fr/api/heartbeat',
+
 ];
