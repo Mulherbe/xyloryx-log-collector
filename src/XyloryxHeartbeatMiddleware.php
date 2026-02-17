@@ -4,7 +4,6 @@ namespace Xyloryx\LogCollector;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
 
 class XyloryxHeartbeatMiddleware
@@ -27,6 +26,7 @@ class XyloryxHeartbeatMiddleware
      * Increment the in-memory counter after each request.
      * When it hits the threshold, flush the batch to the server and reset.
      * This runs in the terminate phase so it does NOT block the response.
+     * Uses native cURL to be completely independent from Laravel's cache/redis configuration.
      */
     public function terminate(Request $request, Response $response): void
     {
@@ -48,15 +48,41 @@ class XyloryxHeartbeatMiddleware
             self::$counter = 0;
 
             try {
-                Http::timeout(2)
-                    ->withHeaders([
-                        'X-API-KEY' => $apiKey,
-                        'Accept' => 'application/json',
-                    ])
-                    ->post($endpoint, ['count' => $toSend]);
-            } catch (\Exception $e) {
-                // Fail silently — never break the application for monitoring
+                // Use native cURL instead of Laravel Http to avoid cache/redis dependencies
+                $this->sendWithCurl($endpoint, $apiKey, $toSend);
+            } catch (\Throwable $e) {
+                // Fail silently — NEVER break the application for monitoring
             }
         }
+    }
+
+    /**
+     * Send heartbeat data using native cURL (no Laravel dependencies).
+     */
+    protected function sendWithCurl(string $endpoint, string $apiKey, int $count): void
+    {
+        $ch = curl_init($endpoint);
+
+        if ($ch === false) {
+            return; // cURL init failed, fail silently
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 2,
+            CURLOPT_CONNECTTIMEOUT => 1,
+            CURLOPT_HTTPHEADER => [
+                'X-API-KEY: ' . $apiKey,
+                'Accept: application/json',
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS => json_encode(['count' => $count]),
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+
+        curl_exec($ch);
+        curl_close($ch);
     }
 }
