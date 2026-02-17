@@ -28,6 +28,12 @@ class XyloryxHeartbeatMiddleware
             return;
         }
 
+        // Skip heartbeat for internal monitoring endpoints to avoid infinite loops
+        $path = $request->path();
+        if ($this->shouldSkipHeartbeat($path)) {
+            return;
+        }
+
         $apiKey = config('xyloryx-log.api_key');
         $endpoint = config('xyloryx-log.heartbeat_endpoint');
 
@@ -40,6 +46,27 @@ class XyloryxHeartbeatMiddleware
         } catch (\Throwable $e) {
             // Fail silently — NEVER break the application for monitoring
         }
+    }
+
+    /**
+     * Check if we should skip heartbeat for this request path.
+     * Prevents infinite loops when monitoring endpoints call themselves.
+     */
+    protected function shouldSkipHeartbeat(string $path): bool
+    {
+        $excludedPaths = [
+            'api/heartbeat',           // Heartbeat endpoint itself
+            'api/errors',              // Error ingestion endpoint
+            '_xyloryx-log/ping',       // Connection test endpoint
+        ];
+
+        foreach ($excludedPaths as $excluded) {
+            if (str_contains($path, $excluded)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
