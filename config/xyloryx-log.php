@@ -43,10 +43,12 @@ return [
     | Heartbeat (Project Health)
     |--------------------------------------------------------------------------
     |
-    | When enabled, sends a heartbeat on EVERY request to track total request
-    | count per project. Runs in terminate phase (non-blocking).
+    | Tracks total request count per project. Batches 50 requests before
+    | sending to avoid spamming the API. Uses a file-based counter in the
+    | package directory (no DB, no cache dependencies).
     |
-    | Simple, reliable, works perfectly with multiple PHP-FPM workers.
+    | Works reliably across multiple PHP-FPM workers using file locking.
+    | Runs in terminate phase (non-blocking).
     |
     */
 

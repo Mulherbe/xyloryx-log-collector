@@ -17,9 +17,10 @@ class XyloryxHeartbeatMiddleware
     }
 
     /**
-     * Send a heartbeat after each request to track total request count.
+     * Send a heartbeat after batching requests to track total request count.
+     * Uses a file-based counter with flock() for synchronization across workers.
+     * Batches of 50 requests before sending to avoid spamming the API.
      * This runs in the terminate phase so it does NOT block the response.
-     * Uses native cURL to be completely independent from Laravel's cache/redis configuration.
      */
     public function terminate(Request $request, Response $response): void
     {
@@ -35,11 +36,51 @@ class XyloryxHeartbeatMiddleware
         }
 
         try {
-            // Send 1 request count for every request - simple and reliable
-            $this->sendWithCurl($endpoint, $apiKey, 1);
+            $this->incrementAndMaybeSend($endpoint, $apiKey);
         } catch (\Throwable $e) {
             // Fail silently — NEVER break the application for monitoring
         }
+    }
+
+    /**
+     * Increment counter in package file and send batch when threshold is reached.
+     * Uses file locking to work reliably across multiple PHP-FPM workers.
+     */
+    protected function incrementAndMaybeSend(string $endpoint, string $apiKey): void
+    {
+        // Counter file in the package directory (vendor/xyloryx/log-collector/)
+        $counterFile = __DIR__ . '/../.heartbeat_count';
+        $threshold = 50; // Send every 50 requests
+
+        // Open file for reading and writing, create if doesn't exist
+        $fp = @fopen($counterFile, 'c+');
+
+        if ($fp === false) {
+            // If we can't open the file, fall back to sending every request
+            $this->sendWithCurl($endpoint, $apiKey, 1);
+            return;
+        }
+
+        // Lock file exclusively for atomic read-modify-write
+        if (flock($fp, LOCK_EX)) {
+            $currentCount = (int) stream_get_contents($fp);
+            $newCount = $currentCount + 1;
+
+            if ($newCount >= $threshold) {
+                // Reached threshold: send and reset
+                $this->sendWithCurl($endpoint, $apiKey, $newCount);
+                $newCount = 0;
+            }
+
+            // Write new count back to file
+            rewind($fp);
+            ftruncate($fp, 0);
+            fwrite($fp, (string) $newCount);
+
+            flock($fp, LOCK_UN);
+        }
+
+        fclose($fp);
     }
 
     /**
