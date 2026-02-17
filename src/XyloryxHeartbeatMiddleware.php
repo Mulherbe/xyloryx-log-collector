@@ -70,13 +70,14 @@ class XyloryxHeartbeatMiddleware
     }
 
     /**
-     * Increment counter in package file and send batch when threshold is reached.
+     * Increment counter in /tmp and send batch when threshold is reached.
      * Uses file locking to work reliably across multiple PHP-FPM workers.
+     * Stored in /tmp (always writable) with API key hash to avoid conflicts.
      */
     protected function incrementAndMaybeSend(string $endpoint, string $apiKey): void
     {
-        // Counter file in the package directory (vendor/xyloryx/log-collector/)
-        $counterFile = __DIR__ . '/../.heartbeat_count';
+        // Counter file in /tmp — always writable, unique per project via API key hash
+        $counterFile = sys_get_temp_dir() . '/xyloryx_hb_' . md5($apiKey) . '.count';
         $threshold = 50; // Send every 50 requests
 
         // Open file for reading and writing, create if doesn't exist
