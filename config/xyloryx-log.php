@@ -43,16 +43,20 @@ return [
     | Heartbeat (Project Health)
     |--------------------------------------------------------------------------
     |
-    | When enabled, the collector sends a lightweight POST request to the
-    | heartbeat endpoint on every web request (via terminate middleware).
-    | This allows Xyloryx Log to track total request counts per project
-    | and calculate error rates. Disabled by default (premium feature).
+    | When enabled, the collector batches request counts and sends them to
+    | the heartbeat endpoint. The threshold defines how many requests each
+    | PHP-FPM worker must handle before sending a batch.
+    |
+    | Default: 10 (recommended for multi-worker production environments)
+    | Note: With 4 workers, you'll send ~1 batch per 10 actual requests.
     |
     */
 
     'heartbeat_enabled' => env('XYLORYX_LOG_HEARTBEAT', false),
 
     'heartbeat_endpoint' => 'https://log.xiloryx.fr/api/heartbeat',
+
+    'heartbeat_threshold' => env('XYLORYX_LOG_HEARTBEAT_THRESHOLD', 10),
 
 
 ];

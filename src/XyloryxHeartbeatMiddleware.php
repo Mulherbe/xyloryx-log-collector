@@ -10,9 +10,10 @@ class XyloryxHeartbeatMiddleware
 {
     /**
      * In-memory counter — per worker process, no external dependency needed.
+     * Note: With multiple PHP-FPM workers, each has its own counter.
+     * A lower threshold (10-20) is recommended for production.
      */
     private static int $counter = 0;
-    private static int $threshold = 100;
 
     /**
      * Handle an incoming request.
@@ -43,7 +44,10 @@ class XyloryxHeartbeatMiddleware
 
         self::$counter++;
 
-        if (self::$counter >= self::$threshold) {
+        // Configurable threshold (default 10 for multi-worker environments)
+        $threshold = config('xyloryx-log.heartbeat_threshold', 10);
+
+        if (self::$counter >= $threshold) {
             $toSend = self::$counter;
             self::$counter = 0;
 
