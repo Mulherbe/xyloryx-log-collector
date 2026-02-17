@@ -9,13 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 class XyloryxHeartbeatMiddleware
 {
     /**
-     * In-memory counter — per worker process, no external dependency needed.
-     * Note: With multiple PHP-FPM workers, each has its own counter.
-     * A lower threshold (10-20) is recommended for production.
-     */
-    private static int $counter = 0;
-
-    /**
      * Handle an incoming request.
      */
     public function handle(Request $request, Closure $next): Response
@@ -24,8 +17,7 @@ class XyloryxHeartbeatMiddleware
     }
 
     /**
-     * Increment the in-memory counter after each request.
-     * When it hits the threshold, flush the batch to the server and reset.
+     * Send a heartbeat after each request to track total request count.
      * This runs in the terminate phase so it does NOT block the response.
      * Uses native cURL to be completely independent from Laravel's cache/redis configuration.
      */
@@ -42,21 +34,11 @@ class XyloryxHeartbeatMiddleware
             return;
         }
 
-        self::$counter++;
-
-        // Configurable threshold (default 10 for multi-worker environments)
-        $threshold = config('xyloryx-log.heartbeat_threshold', 10);
-
-        if (self::$counter >= $threshold) {
-            $toSend = self::$counter;
-            self::$counter = 0;
-
-            try {
-                // Use native cURL instead of Laravel Http to avoid cache/redis dependencies
-                $this->sendWithCurl($endpoint, $apiKey, $toSend);
-            } catch (\Throwable $e) {
-                // Fail silently — NEVER break the application for monitoring
-            }
+        try {
+            // Send 1 request count for every request - simple and reliable
+            $this->sendWithCurl($endpoint, $apiKey, 1);
+        } catch (\Throwable $e) {
+            // Fail silently — NEVER break the application for monitoring
         }
     }
 

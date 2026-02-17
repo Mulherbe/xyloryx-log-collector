@@ -63,7 +63,7 @@ class XyloryxLogServiceProvider extends ServiceProvider
             return response()->json([
                 'status' => 'ok',
                 'package' => 'xyloryx/log-collector',
-                'version' => '1.2.4',
+                'version' => '1.2.5',
                 'enabled' => config('xyloryx-log.enabled', false),
                 'heartbeat' => config('xyloryx-log.heartbeat_enabled', false),
             ]);

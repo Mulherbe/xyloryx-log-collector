@@ -43,20 +43,16 @@ return [
     | Heartbeat (Project Health)
     |--------------------------------------------------------------------------
     |
-    | When enabled, the collector batches request counts and sends them to
-    | the heartbeat endpoint. The threshold defines how many requests each
-    | PHP-FPM worker must handle before sending a batch.
+    | When enabled, sends a heartbeat on EVERY request to track total request
+    | count per project. Runs in terminate phase (non-blocking).
     |
-    | Default: 10 (recommended for multi-worker production environments)
-    | Note: With 4 workers, you'll send ~1 batch per 10 actual requests.
+    | Simple, reliable, works perfectly with multiple PHP-FPM workers.
     |
     */
 
     'heartbeat_enabled' => env('XYLORYX_LOG_HEARTBEAT', false),
 
     'heartbeat_endpoint' => 'https://log.xiloryx.fr/api/heartbeat',
-
-    'heartbeat_threshold' => env('XYLORYX_LOG_HEARTBEAT_THRESHOLD', 10),
 
 
 ];
