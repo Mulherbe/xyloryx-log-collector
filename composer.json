@@ -1,13 +1,13 @@
 {
-    "name": "xyloryx/log-collector",
-    "description": "Laravel error collector package for Xyloryx Log monitoring system",
+    "name": "xiloryx/log-collector",
+    "description": "Laravel error collector package for Xiloryx Log monitoring system",
     "version": "1.2.7",
     "type": "library",
     "license": "proprietary",
     "authors": [
         {
-            "name": "Xyloryx",
-            "email": "contact@xyloryx.com"
+            "name": "Xiloryx",
+            "email": "contact@xiloryx.com"
         }
     ],
     "require": {
@@ -18,13 +18,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Xyloryx\\LogCollector\\": "src/"
+            "Xiloryx\\LogCollector\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Xyloryx\\LogCollector\\XyloryxLogServiceProvider"
+                "Xiloryx\\LogCollector\\XiloryxLogServiceProvider"
             ]
         }
     },
